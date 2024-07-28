@@ -1,5 +1,13 @@
-export default function Home() {
+import { auth } from "@/auth";
+import { SignIn } from "@/components/sign-in";
+import { SignOut } from "@/components/sign-out";
+
+export default async function Home() {
+  const session = await auth();
   return (
-    <h1>Home</h1>
+    <main>
+      {!!session ? <SignOut/> : <SignIn/>}
+      <pre>{JSON.stringify(session, null, 2)}</pre>
+    </main>
   );
 }

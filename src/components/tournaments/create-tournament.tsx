@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card
 import { Cross1Icon } from '@radix-ui/react-icons'
 import InputImagePreview from './input-image-preview'
 import CreateTournamentFab from './create-tournament-fab'
+import { PlusIcon, Upload } from 'lucide-react'
 
 export type ContestantDsiplay = 'image' | 'color'
 
@@ -43,6 +44,8 @@ function CreateTournament(props: Props) {
 
   const formValues = form.watch();
   const validation = formSchema.safeParse(formValues);
+
+  console.log(formValues)
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -77,16 +80,16 @@ function CreateTournament(props: Props) {
     
       <Form {...form}>
           {!fields.length && (
-            <div className='bg-muted rounded-md p-10'>
-              <h3 className='mb-2 text-muted-foreground text-xl uppercase font-bold'>Start by adding contestants</h3>
-              <ul className='text-sm text-muted-foreground list-disc ml-4 space-y-2'>
-                <li>You can add contestants manually using &quot;Add contestant&quot; and specify name and image.</li>
-                <li>You can use &quot;Upload&quot; button and upload multiple images, the names will be taken from image filename.</li>
+            <div className='bg-muted rounded-md p-4 sm:p-10'>
+              <h3 className='mb-5 text-muted-foreground text-sm sm:text-xl uppercase font-bold'>Start by adding contestants</h3>
+              <ul className='text-xs sm:text-base text-muted-foreground list-disc ml-4 space-y-2'>
+                <li>You can add contestants manually using <Button size='icon' variant='secondary' className='w-6 h-6 rounded'><PlusIcon size={15} className='inline'/></Button> and specify name and image.</li>
+                <li>You can use <Button size='icon' variant='secondary' className='w-6 h-6 rounded'><Upload size={15} className='inline'/></Button> button to upload multiple images</li>
               </ul>
             </div>
           )}
         <form className='mt-4' onSubmit={form.handleSubmit(onSubmit)}>
-          <ul className='flex gap-4 flex-wrap justify-center'>
+          <ul className='flex gap-4 flex-wrap justify-center pb-20'>
             {fields.map((field, fieldIdx) => (  
               <li key={field.id}>
                 <Card className='relative w-60'>
@@ -121,6 +124,12 @@ function CreateTournament(props: Props) {
                       preview={previews[fieldIdx]}
                       errorMessage={getErrorMessage(fieldIdx)?.message}
                       {...form.register(`contestants.${fieldIdx}.image`)}
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if(files) {
+                          form.setValue(`contestants.${fieldIdx}.image`, files)
+                        }
+                      }}
                     />
                   </CardContent>
                 </Card>

@@ -1,5 +1,7 @@
+import CreateTournament from "@/components/tournaments/create-tournament";
+
 export default function CreateTournamentsPage(){
   return (
-    <h1>Create tournaments</h1>
+    <CreateTournament/>
   )
 }

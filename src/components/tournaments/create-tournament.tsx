@@ -1,5 +1,5 @@
 'use client'
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -9,6 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import Image from 'next/image'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card'
 import { Cross1Icon } from '@radix-ui/react-icons'
+import InputImagePreview from './input-image-preview'
+import CreateTournamentFab from './create-tournament-fab'
 
 export type ContestantDsiplay = 'image' | 'color'
 
@@ -35,14 +37,9 @@ function CreateTournament(props: Props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      contestants: [
-        { name: '', image: null as unknown as FileList },
-        { name: '', image: null as unknown as FileList },
-      ],
+      contestants: [],
     },
   })
-
-  console.log(form.formState.errors)
 
   const formValues = form.watch();
   const validation = formSchema.safeParse(formValues);
@@ -58,7 +55,6 @@ function CreateTournament(props: Props) {
     console.log(values)
   }
 
-
   // handle previews
   useEffect(() => {
     formValues.contestants.forEach((contestant, index) => {
@@ -71,14 +67,24 @@ function CreateTournament(props: Props) {
     })
   }, [contestantsWithPreview, formValues.contestants])
 
+  const getErrorMessage = useCallback((fieldIdx: number) => {
+    return form.formState.errors.contestants 
+      && form.formState.errors.contestants[fieldIdx]
+        && form.formState.errors.contestants[fieldIdx]
+  }, [form.formState.errors.contestants])
+
   return (
     
       <Form {...form}>
-        <div>
           {!fields.length && (
-            <span className='text-foreground uppercase font-light'>Start by adding contestants</span>
+            <div className='bg-muted rounded-md p-10'>
+              <h3 className='mb-2 text-muted-foreground text-xl uppercase font-bold'>Start by adding contestants</h3>
+              <ul className='text-sm text-muted-foreground list-disc ml-4 space-y-2'>
+                <li>You can add contestants manually using &quot;Add contestant&quot; and specify name and image.</li>
+                <li>You can use &quot;Upload&quot; button and upload multiple images, the names will be taken from image filename.</li>
+              </ul>
+            </div>
           )}
-        </div>
         <form className='mt-4' onSubmit={form.handleSubmit(onSubmit)}>
           <ul className='flex gap-4 flex-wrap justify-center'>
             {fields.map((field, fieldIdx) => (  
@@ -110,69 +116,23 @@ function CreateTournament(props: Props) {
                         </FormItem>
                       )}
                     />
-                    <label htmlFor={`${fieldIdx}.image`}>
-                      <div className='group cursor-pointer relative w-full h-[180px] rounded-md overflow-hidden border border-input hover:opacity-50'>
-                        { previews[fieldIdx] ? (
-                          <>
-                            <Image 
-                              fill 
-                              className='object-cover' 
-                              alt='preview' 
-                              src={previews[fieldIdx]} 
-                            /> 
-                            <div className='opacity-0 group-hover:opacity-100 transition-all absolute top-0 left-0 w-full h-full backdrop-blur-sm bg-black/30 grid place-content-center'>
-                              <span className='font-light uppercase text-white'>Change</span>
-                            </div>
-                          </>
-                          
-                        ) : (
-                          <div className='transition-all absolute top-0 left-0 w-full h-full grid place-content-center'>
-                            <span className='font-light text-card-foreground uppercase'>Choose image</span>
-                          </div>
-                        )
-                        }
-                      </div>
-                      
-                      { form.formState.errors.contestants 
-                        && form.formState.errors.contestants[fieldIdx] 
-                          && (
-                        <div className='bg-destructive rounded-md px-2 mt-2'>
-                          <span className='text-xs text-destructive-foreground'>{form.formState.errors.contestants[fieldIdx].image?.message}</span>
-                        </div>
-                      ) }
-                      
-                      <input
-                        className='sr-only' 
-                        type="file" 
-                        id={`${fieldIdx}.image`} 
-                        {...form.register(`contestants.${fieldIdx}.image`)}
-                      />
-                    </label>
+                    <InputImagePreview
+                      fieldIdx={fieldIdx}
+                      preview={previews[fieldIdx]}
+                      errorMessage={getErrorMessage(fieldIdx)?.message}
+                      {...form.register(`contestants.${fieldIdx}.image`)}
+                    />
                   </CardContent>
                 </Card>
                 
               </li>
             ))}
           </ul>
-          
-          <div className='fixed bottom-0 xl:bottom-4 left-0 w-full'>
-            <div className='h-16 max-w-screen-xl mx-auto px-4 my-0 flex items-center justify-between p-2 bg-nav xl:shadow-md xl:rounded-xl'>
-              <div className='space-x-2'>
-                <Button 
-                  onClick={() => append({ name: '', image: '' as unknown as FileList })} 
-                  variant='secondary' 
-                  type="button"
-                >
-                  Add contestant
-                </Button>
-                <Button variant='destructive' onClick={() => form.reset({ contestants: [] })}>
-                  Reset
-                </Button>
-              </div>
-              <Button type="submit">Continue</Button>
-            </div>
-          </div>
-          
+          <CreateTournamentFab
+            onAppend={() => append({ name: '', image: '' as unknown as FileList })}
+            onReset={() => form.reset({ contestants: [] })}
+            isValid={validation.success}
+          />
         </form>
       </Form>
   )
